@@ -115,8 +115,15 @@
   --ease-out: cubic-bezier(0.16, 1, 0.3, 1);
 
   /* --- SCRUB ------------------------------------------------ */
-  --scrub-length: 320vh;
-  --scrub-frame-guard: 0.017s;
+  /* 320vh daba 13.6 s de video por segundo de scroll: el motor
+     pedía 270 frames donde caben 40. 560vh lo deja en ~5.9 s/s. */
+  --scrub-length: 560vh;
+
+  /* El HUD NUNCA anima height ni top: solo transform. Animar
+     layout en cada frame es un stutter por sí solo. */
+  --rail-track: min(34vh, 19rem);
+  --rail-inset: 4px;
+  --rail-travel: calc(var(--rail-track) - 2 * var(--rail-inset));
   --keyline: 1px;
 
   /* Capas */

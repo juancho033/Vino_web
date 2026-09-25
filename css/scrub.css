@@ -166,25 +166,29 @@
 .scrub__track {
   position: relative;
   width: var(--keyline);
-  height: min(34vh, 19rem);
+  height: var(--rail-track);
   background: var(--line-dark);
 }
 
+/* scaleY en vez de height: mismo resultado visual, cero layout.
+   inset fija la altura; el origen es el borde superior. */
 .scrub__fill {
   position: absolute;
-  inset: 0 0 auto;
-  height: calc(4px + (100% - 8px) * var(--progress, 0));
+  inset: var(--rail-inset) 0;
   background: var(--vino-300);
+  transform-origin: top center;
+  transform: scaleY(var(--progress, 0));
 }
 
 .scrub__marker {
   position: absolute;
-  left: 50%;
-  top: calc(4px + (100% - 8px) * var(--progress, 0));
+  top: 50%;
+  left: 0;
   width: 7px;
   height: 7px;
+  margin: -3.5px 0 0 -3.5px;
   background: var(--vino-300);
-  transform: translate(-50%, -50%) rotate(45deg);
+  transform: translateY(calc(var(--rail-travel) * (var(--progress, 0) - 0.5))) rotate(45deg);
 }
 
 /* --- Estado de carga --------------------------------------- */

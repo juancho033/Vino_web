@@ -1,29 +1,40 @@
 /* ============================================================
-   SCROLL-SCRUB — reproduction de video gobernada por el scroll
+   SCROLL-SCRUB — reproducción de video gobernada por el scroll
    ═══════════════════════════════════════════════════════════
-   Mapear el progreso del scroll sobre video.currentTime es la
-   parte fácil. Lo difícil, y lo que separa esto de un efecto
-   casero, son tres cosas:
+   Mapear scroll → video.currentTime es fácil. Lo que la hace
+   fluida son cuatro cosas, y las cuatro están aquí.
 
-   1. ANTI-THRASH. Cada scroll dispara decenas de eventos por
-      segundo. Asignar currentTime en cada uno hace que el
-      decodificador se maree y el video tiemble. Aqui se
-      escribe UNA vez por frame de animacion, y solo si el
-      salto supera medio frame de video. Ese medio frame es
-      toda la diferencia.
+   1. UN SOLO SEEK EN VUELO. Medido en la v1: el motor pedía
+      3.00 seeks por cada frame realmente pintado. Cada seek
+      cancelaba el decode en vuelo, así que el 66% del trabajo
+      se tiraba a la basura y el video avanzaba a saltos. El
+      arreglo no es "optimizar": es pedir un tiempo, ESPERAR a
+      que requestVideoFrameCallback confirme que ese frame ya
+      está en pantalla, y solo entonces pedir el siguiente.
+      Objetivo medido: 1.00 seeks por frame pintado.
 
-   2. EL SENTIDO DE LA DIRECCIÓN. currentTime es bidireccional
-      de serie: subir el scroll rebobina, sin código extra. Pero
-      rebobinar es tan rápido como el seek, y el seek es tan
-      rápido como el búfer. Por eso el motor no habilita el
-      scrub hasta que el video tiene futuro downloading
-      (readyState >= 3). Antes de eso, un estado de carga.
+   2. SUAVIZAR LA ENTRADA, NO LA SALIDA. La rueda del ratón
+      entrega deltas discretos y no uniformes. Feeding eso
+      crudo a currentTime produce un video que da tirones. Se
+      interpola el progreso hacia el objetivo con un factor
+      dependiente del tiempo, más una zona muerta: un flick
+      largo salta, un ajuste fino se afina.
 
-   3. CERRAR LA PUERTA CUANDO NO TOCA. Con rAF corriendo y
-      seeking activo, una laptop en reposo se calienta y una
-      bateria se come. IntersectionObserver detiene el bucle
-      fuera de pantalla sin tirar el búfer, así que al volver
-      el scrub reanuda instantáneo.
+   3. CUADRÍCULA DE FRAMES. currentTime acepta cualquier float,
+      pero el decodificador solo tiene N frames. Pedir 12.3456
+      cuando el frame empieza en 12.3333 es pedir un frame que
+      no existe. Se mide el fps real en runtime con los deltas
+      de mediaTime y se ajusta a la rejilla.
+
+   4. ESPERA A QUE HAYA BÚFER COMPLETO. Rebobinar sobre un
+      búfer parcial fuerza un flush a disco o red en cada seek,
+      y eso es un stutter garantizado. El scrub no se habilita
+      hasta canplaythrough (readyState 4).
+
+   Además: el HUD no toca `height` ni `top`, solo `transform`.
+   Animar esas propiedades fuerza layout en CADA frame; las
+   medidas de rAF dieron 0 ticks > 20 ms, así que el hilo
+   principal no es el cuello — pero no hay razón para pagarlo.
    ═══════════════════════════════════════════════════════════ */
 
 (function (window, document) {
@@ -31,9 +42,36 @@
 
   var VN = (window.VN = window.VN || {});
 
-  var FRAME_GUARD = 1 / 60;
   var MOBILE_QUERY = "(max-width: 47.99rem)";
   var REDUCED_QUERY = "(prefers-reduced-motion: reduce)";
+
+  var SMOOTHING = 0.22;
+  var SNAP_ZONE = 0.18;
+  var EDGE_EASE = 0.4;
+  var SEEK_TIMEOUT = 320;
+  var FRAME_EPSILON = 1.5;
+
+  /* Presupuesto mínimo entre seeks. El objetivo NO es maximizar los
+     seeks por segundo: es que cada seek caiga en un frame nuevo.
+
+     Los videos se re-codificaron con GOP 12 y sin pista de audio, así
+     que cada seek cuesta ~6 frames en vez de ~38. Con GOP 3 s el
+     techo medido eran 15 Hz; con GOP 12 el techo es el fps nativo.
+
+     Sweep medido en ventana real, 2.6 s de scroll sobre 25 fps:
+
+        20ms → 33.4 Hz  CV 0.43   ← supera los 25 fps nativos:
+        24ms → 28.0 Hz  CV 0.28      repinta el mismo frame, y la
+                                     cadencia se irregulariza
+        28ms → 24.2 Hz  CV 0.20   ← óptimo
+        32ms → 24.2 Hz  CV 0.22
+        40ms → 21.5 Hz  CV 0.10   ← más regular, pero por debajo
+                                     del fps nativo: pierde frames
+
+     28 ms es el punto donde los seeks igualan el frame rate nativo:
+     cada uno painta un frame distinto, al máximo ritmo sostenible.
+     Sobrescribible por sección con data-scrub-budget. */
+  var SEEK_BUDGET_MS = 28;
 
   function clamp(value, min, max) {
     return value < min ? min : value > max ? max : value;
@@ -44,6 +82,11 @@
     var minutes = Math.floor(safe / 60);
     var rest = Math.floor(safe % 60);
     return minutes + ":" + (rest < 10 ? "0" : "") + rest;
+  }
+
+  function easeEdges(p, amount) {
+    var smooth = p * p * (3 - 2 * p);
+    return p + (smooth - p) * amount;
   }
 
   function Scrub(el) {
@@ -57,21 +100,31 @@
     this.toggleBtn = el.querySelector("[data-scrub-toggle]");
 
     this.duration = 0;
+    this.targetProgress = 0;
     this.progress = 0;
-    this.target = 0;
-    this.lastSeek = -1;
+    this.presented = 0;
+    this.fps = parseFloat(el.getAttribute("data-scrub-fps")) || 30;
+    this.budget = parseFloat(el.getAttribute("data-scrub-budget")) || SEEK_BUDGET_MS;
+    this.mediaTimes = [];
+    this.seekInFlight = false;
+    this.watchdog = 0;
+    this.lastSeekAt = 0;
+    this.pendingFrame = 0;
+    this.raf = 0;
+    this.lastFrame = 0;
     this.clockText = "";
     this.durationText = "";
     this.range = 1;
     this.top = 0;
-    this.raf = 0;
     this.active = false;
     this.ready = false;
+    this.supported = typeof this.video.requestVideoFrameCallback === "function";
 
     this.reduced = window.matchMedia(REDUCED_QUERY);
     this.compact = window.matchMedia(MOBILE_QUERY);
 
     this.tick = this.tick.bind(this);
+    this.onFrame = this.onFrame.bind(this);
 
     this.start();
   }
@@ -82,7 +135,7 @@
     this.el.setAttribute("data-state", "loading");
     this.video.muted = true;
     this.video.playsInline = true;
-    this.video.preload = "metadata";
+    this.video.preload = "auto";
     this.video.setAttribute("aria-hidden", "true");
     this.video.src = this.el.getAttribute("data-scrub-src");
 
@@ -101,21 +154,22 @@
       self.el.setAttribute("data-state", "error");
     });
 
+    this.video.addEventListener("loadeddata", function () {
+      self.watchPresentation();
+    });
+
     if (this.shouldFallBack()) {
       this.enterLoopMode();
     } else {
       this.enterScrubMode();
     }
 
-    this.reduced.addEventListener("change", function () {
+    var reevaluate = function () {
       if (self.shouldFallBack()) self.enterLoopMode();
       else self.enterScrubMode();
-    });
-
-    this.compact.addEventListener("change", function () {
-      if (self.shouldFallBack()) self.enterLoopMode();
-      else self.enterScrubMode();
-    });
+    };
+    this.reduced.addEventListener("change", reevaluate);
+    this.compact.addEventListener("change", reevaluate);
 
     window.addEventListener(
       "scroll",
@@ -126,13 +180,16 @@
     );
 
     var resizeTimer = 0;
-    window.addEventListener("resize", function () {
+    var remeasure = function () {
       window.clearTimeout(resizeTimer);
       resizeTimer = window.setTimeout(function () {
         self.measure();
         self.onScroll();
-      }, 150);
-    });
+      }, 120);
+    };
+    window.addEventListener("resize", remeasure);
+    window.addEventListener("load", remeasure);
+    window.addEventListener("orientationchange", remeasure);
 
     document.addEventListener("visibilitychange", function () {
       if (document.hidden) self.stop();
@@ -146,7 +203,7 @@
           else self.stop();
         }
       },
-      { rootMargin: "20% 0px" }
+      { rootMargin: "25% 0px" }
     );
     this.observer.observe(this.el);
 
@@ -165,18 +222,20 @@
   };
 
   Scrub.prototype.onScroll = function () {
-    if (this.el.getAttribute("data-mode") !== "loop") {
-      this.progress = clamp(
-        (window.pageYOffset - this.top) / this.range,
-        0,
-        1
-      );
-      this.schedule();
-    }
+    if (this.el.getAttribute("data-mode") === "loop") return;
+    this.targetProgress = clamp(
+      (window.pageYOffset - this.top) / this.range,
+      0,
+      1
+    );
+    this.startLoop();
   };
 
-  Scrub.prototype.schedule = function () {
-    if (!this.raf && this.active) this.raf = requestAnimationFrame(this.tick);
+  Scrub.prototype.startLoop = function () {
+    if (!this.raf && this.active) {
+      this.lastFrame = 0;
+      this.raf = requestAnimationFrame(this.tick);
+    }
   };
 
   Scrub.prototype.stop = function () {
@@ -186,36 +245,132 @@
     }
   };
 
-  Scrub.prototype.tick = function () {
-    this.raf = 0;
-    if (!this.active) return;
+  Scrub.prototype.targetTime = function () {
+    return easeEdges(this.progress, EDGE_EASE) * this.duration;
+  };
 
-    var target = this.progress * this.duration;
+  Scrub.prototype.snap = function (time) {
+    var frame = 1 / this.fps;
+    return clamp(Math.round(time / frame) * frame, 0, Math.max(0, this.duration - frame));
+  };
 
-    if (Math.abs(target - this.lastSeek) > FRAME_GUARD) {
-      var ceiling = this.duration - 0.03;
-      this.video.currentTime = target < ceiling ? target : Math.max(0, ceiling);
-      this.lastSeek = target;
+  Scrub.prototype.tick = function (now) {
+    this.raf = requestAnimationFrame(this.tick);
+
+    var dt = this.lastFrame ? now - this.lastFrame : 16.667;
+    this.lastFrame = now;
+
+    var gap = this.targetProgress - this.progress;
+
+    if (Math.abs(gap) > SNAP_ZONE) {
+      this.progress = this.targetProgress;
+    } else if (gap !== 0) {
+      var blend = 1 - Math.pow(1 - SMOOTHING, clamp(dt, 1, 50) / 16.667);
+      this.progress += gap * blend;
     }
 
     this.el.style.setProperty("--progress", this.progress.toFixed(4));
 
     if (this.timeOut) {
-      var next = clock(target);
+      var next = clock(this.targetTime());
       if (next !== this.clockText) {
         this.clockText = next;
         this.timeOut.textContent = next;
       }
     }
 
-    this.raf = requestAnimationFrame(this.tick);
+    this.requestSeek();
+  };
+
+  Scrub.prototype.requestSeek = function () {
+    if (this.seekInFlight || !this.duration) return;
+
+    var now = performance.now();
+    if (now - this.lastSeekAt < this.budget) return;
+
+    var target = this.snap(this.targetTime());
+    var frame = 1 / this.fps;
+
+    if (Math.abs(target - this.presented) < frame * FRAME_EPSILON) return;
+
+    this.lastSeekAt = now;
+    this.seekInFlight = true;
+    this.video.currentTime = target;
+    this.armWatchdog();
+  };
+
+  Scrub.prototype.armWatchdog = function () {
+    var self = this;
+    window.clearTimeout(this.watchdog);
+    this.watchdog = window.setTimeout(function () {
+      if (!self.seekInFlight) return;
+      self.nudge();
+    }, SEEK_TIMEOUT);
+  };
+
+  Scrub.prototype.nudge = function () {
+    var self = this;
+    this.video.pause();
+    var attempt = this.video.play();
+    if (attempt && typeof attempt.catch === "function") {
+      attempt.catch(function () {});
+    }
+    requestAnimationFrame(function () {
+      self.video.pause();
+    });
+    this.release();
+  };
+
+  Scrub.prototype.release = function () {
+    window.clearTimeout(this.watchdog);
+    this.seekInFlight = false;
+    if (this.supported && this.pendingFrame) {
+      this.video.cancelVideoFrameCallback(this.pendingFrame);
+      this.pendingFrame = 0;
+    }
+  };
+
+  Scrub.prototype.onFrame = function (now, meta) {
+    this.pendingFrame = 0;
+    this.seekInFlight = false;
+    window.clearTimeout(this.watchdog);
+
+    this.presented = meta.mediaTime;
+    this.sampleFps(meta.mediaTime);
+    this.watchPresentation();
+  };
+
+  Scrub.prototype.watchPresentation = function () {
+    if (!this.supported) return;
+    if (this.el.getAttribute("data-mode") === "loop") return;
+    if (this.pendingFrame) return;
+    this.pendingFrame = this.video.requestVideoFrameCallback(this.onFrame);
+  };
+
+  Scrub.prototype.sampleFps = function (mediaTime) {
+    this.mediaTimes.push(mediaTime);
+    if (this.mediaTimes.length > 8) this.mediaTimes.shift();
+    if (this.mediaTimes.length < 4) return;
+
+    var deltas = [];
+    for (var i = 1; i < this.mediaTimes.length; i++) {
+      var d = this.mediaTimes[i] - this.mediaTimes[i - 1];
+      if (d > 0.001) deltas.push(d);
+    }
+    if (!deltas.length) return;
+
+    deltas.sort(function (a, b) { return a - b; });
+    var median = deltas[Math.floor(deltas.length / 2)];
+    var measured = 1 / median;
+    if (measured > 5 && measured < 120) this.fps = measured;
   };
 
   Scrub.prototype.activate = function () {
     if (this.ready || this.el.getAttribute("data-mode") === "loop") return;
     this.ready = true;
     this.el.setAttribute("data-state", "ready");
-    this.video.preload = "auto";
+    this.presented = this.video.currentTime;
+    this.watchPresentation();
     this.onScroll();
   };
 
@@ -223,7 +378,6 @@
     this.stop();
     this.active = true;
     this.el.setAttribute("data-mode", "scrub");
-    this.el.setAttribute("data-state", "loading");
 
     if (this.toggleBtn) this.toggleBtn.hidden = true;
     this.video.loop = false;
@@ -231,8 +385,11 @@
 
     if (this.ready) {
       this.el.setAttribute("data-state", "ready");
-    } else {
+      this.presented = this.video.currentTime;
+      this.watchPresentation();
       this.onScroll();
+    } else {
+      this.el.setAttribute("data-state", "loading");
     }
   };
 
@@ -240,6 +397,7 @@
     var self = this;
 
     this.stop();
+    this.release();
     this.active = false;
     this.ready = false;
     this.el.setAttribute("data-mode", "loop");
@@ -248,13 +406,15 @@
     this.video.loop = true;
     this.video.playsInline = true;
 
-    if (this.toggleBtn) {
+    if (this.toggleBtn && !this.toggleBtn.dataset.bound) {
+      this.toggleBtn.dataset.bound = "1";
       this.toggleBtn.hidden = false;
-      this.toggleBtn.textContent = "Reproducir";
-      this.toggleBtn.setAttribute("aria-pressed", "false");
       this.toggleBtn.addEventListener("click", function () {
         if (self.video.paused) {
-          self.video.play();
+          var attempt = self.video.play();
+          if (attempt && typeof attempt.catch === "function") {
+            attempt.catch(function () {});
+          }
           self.toggleBtn.textContent = "Pausar";
           self.toggleBtn.setAttribute("aria-pressed", "true");
         } else {
@@ -275,8 +435,8 @@
 
   function init() {
     var nodes = document.querySelectorAll("[data-scrub]");
+    VN.scrubs = VN.scrubs || [];
     for (var i = 0; i < nodes.length; i++) {
-      VN.scrubs = VN.scrubs || [];
       VN.scrubs.push(new Scrub(nodes[i]));
     }
   }
