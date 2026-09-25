@@ -1,0 +1,163 @@
+/* ============================================================
+   VIGNOBLE NOIR — BLOQUE DE TOKENS
+   Dirección: "Editorial de cata". Papel primero, filetes de 1px,
+   cero radios, cero sombras. Un solo tono de acento: burdeos.
+   Ningún valor fuera de este archivo pertenece a un componente.
+   ============================================================ */
+
+:root {
+  /* --- TIPOGRAFÍA ------------------------------------------ */
+  /* Cormorant Garamond: serif de alto contraste con heritage de
+     etiqueta de viñedo. Solo para display (>= 24px); su x-height
+     la vuelve ilegible en cuerpo. Archivo cubre texto y UI. */
+  --font-display: "Cormorant Garamond", Georgia, "Times New Roman", serif;
+  --font-text: "Archivo", "Helvetica Neue", Helvetica, Arial, sans-serif;
+
+  /* Escala ratio 1.25 (third mayor) */
+  --step--2: 0.64rem;
+  --step--1: 0.8rem;
+  --step-0: 1rem;
+  --step-1: 1.25rem;
+  --step-2: 1.563rem;
+  --step-3: 1.953rem;
+  --step-4: 2.441rem;
+  --step-5: 3.052rem;
+  --step-6: 3.815rem;
+  --step-7: 4.769rem;
+  --step-8: 5.962rem;
+
+  /* Optical sizing: Cormorant necesita +12% para leerse grande */
+  --display-scale: 1.12;
+
+  /* Títulos fluidos anclados a los escalones de arriba.
+     El mínimo y el máximo SIEMPRE caen en un step de la escala. */
+  --fs-wordmark: clamp(3.4rem, 12.5vw, 9.5rem);
+  --fs-display: clamp(2.4rem, 5.4vw, 4.5rem);
+  --fs-title: clamp(1.8rem, 3.2vw, 2.6rem);
+  --fs-lede: clamp(1.05rem, 1.5vw, 1.3rem);
+
+  --tracking-wide: 0.18em;
+  --tracking-wider: 0.32em;
+  --tracking-display: -0.015em;
+  --leading-display: 0.88;
+  --leading-body: 1.65;
+  --measure: 34rem;
+  --measure-wide: 44rem;
+
+  /* --- ESPACIADO — base 4px ------------------------------- */
+  --space-3xs: 0.25rem;
+  --space-2xs: 0.5rem;
+  --space-xs: 0.75rem;
+  --space-s: 1rem;
+  --space-m: 1.5rem;
+  --space-l: 2rem;
+  --space-xl: 3rem;
+  --space-2xl: 4.5rem;
+  --space-3xl: 7rem;
+  --space-4xl: 11rem;
+
+  /* Ritmo vertical: se varies por sección para expresar jerarquía */
+  --section-y: var(--space-3xl);
+  --section-y-lg: var(--space-4xl);
+  --gutter: clamp(1.25rem, 5vw, 5rem);
+
+  /* --- COLOR — rampa de un solo tono ----------------------- */
+  --paper: #f7f4ee;
+  --paper-raised: #ffffff;
+  --paper-sunk: #efeae1;
+
+  --ink: #1a1512;
+  --ink-2: #554b44;
+  --ink-3: #8c8179;
+  --line: #e3dcd1;
+  --line-strong: #cfc5b6;
+
+  /* El acento: burdeos. Sus tintes son la MISMA rampa, no un
+     segundo color. Se elige el tono por versión (rampa 700→200). */
+  --vino-900: #3d0a13;
+  --vino-800: #4e0d18;
+  --vino-700: #6b1220;
+  --vino-600: #8e1b2b;
+  --vino-500: #ad3540;
+  --vino-400: #c05a60;
+  --vino-300: #d9606b;
+  --vino-200: #e79aa0;
+
+  --vino: var(--vino-700);
+  --vino-hover: var(--vino-600);
+
+  /* Superficies oscuras: negro con toque vino */
+  --noche: #17100f;
+  --noche-2: #241a19;
+  --noche-3: #3a2a28;
+  --hueso: #f2ede6;
+  --hueso-2: #cfc4b8;
+  --hueso-3: #8d8179;
+
+  /* Líneas sobre oscuro */
+  --line-dark: rgba(242, 237, 230, 0.18);
+  --line-dark-soft: rgba(242, 237, 230, 0.1);
+
+  /* --- FORMA — compromisos declarados ----------------------- */
+  --radius: 0;
+  --border: 1px solid var(--line);
+  --border-strong: 1px solid var(--line-strong);
+  --border-dark: 1px solid var(--line-dark);
+  --shadow: none;
+  --shadow-float: none;
+
+  /* --- MOVIMIENTO ------------------------------------------ */
+  --dur-fast: 120ms;
+  --dur: 220ms;
+  --dur-slow: 420ms;
+  --dur-reveal: 720ms;
+  --ease: cubic-bezier(0.2, 0, 0, 1);
+  --ease-out: cubic-bezier(0.16, 1, 0.3, 1);
+
+  /* --- SCRUB ------------------------------------------------ */
+  --scrub-length: 320vh;
+  --scrub-frame-guard: 0.017s;
+  --keyline: 1px;
+
+  /* Capas */
+  --z-stage: 0;
+  --z-panel: 2;
+  --z-header: 50;
+
+  /* --- TOKENS SEMÁNTICOS (tema claro por defecto) -----------
+     Los componentes NUNCA usan la rampa cruda: usan estos. Así
+     cambiar de tema es cambiar de tema, no reescribir reglas. */
+  --surface: var(--paper);
+  --surface-2: var(--paper-raised);
+  --on-surface: var(--ink);
+  --on-surface-2: var(--ink-2);
+  --on-surface-3: var(--ink-3);
+  --rule: var(--line);
+  --accent: var(--vino-700);
+  --accent-hover: var(--vino-600);
+}
+
+/* Tema oscuro: se aplica a las secciones de video.
+   Los tokens semánticos cambian de valor, la rampa no.
+   Hereda todo de :root y solo recorta lo que el fondo oscuro
+   necesita reapuntar. */
+[data-theme="dark"] {
+  --surface: var(--noche);
+  --surface-2: var(--noche-2);
+  --on-surface: var(--hueso);
+  --on-surface-2: var(--hueso-2);
+  --on-surface-3: var(--hueso-3);
+  --rule: var(--line-dark);
+  --accent: var(--vino-300);
+  --accent-hover: var(--vino-200);
+}
+
+@media (prefers-reduced-motion: reduce) {
+  :root {
+    --dur-fast: 1ms;
+    --dur: 1ms;
+    --dur-slow: 1ms;
+    --dur-reveal: 1ms;
+    --scrub-length: 100vh;
+  }
+}

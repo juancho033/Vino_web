@@ -1,0 +1,93 @@
+<!DOCTYPE html>
+<html lang="es">
+<head>
+  <meta charset="utf-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1">
+  <title>Vignoble Noir — Cava privada, Pessac-Lestonac</title>
+  <meta name="description" content="Vignoble Noir: seis viñedos, una sola mesa. Catálogo de la cava privada fundada en 1894 al otro lado de la Gironde.">
+  <meta name="color-scheme" content="light">
+  <meta name="theme-color" content="#17100f">
+
+  <link rel="preconnect" href="https://fonts.googleapis.com">
+  <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
+  <link rel="stylesheet" href="https://fonts.googleapis.com/css2?family=Archivo:wght@400;500;600&amp;family=Cormorant+Garamond:ital,wght@0,400;0,500;0,600;1,400&amp;display=swap">
+
+  <link rel="stylesheet" href="css/tokens.css">
+  <link rel="stylesheet" href="css/base.css">
+  <link rel="stylesheet" href="css/components.css">
+  <link rel="stylesheet" href="css/scrub.css">
+
+  <noscript>
+    <style>
+      .scrub { height: auto; }
+      .scrub__stage { position: static; height: auto; min-height: 70vh; }
+      .scrub__video { position: relative; height: auto; aspect-ratio: 16 / 9; }
+      .scrub__hud, .scrub__loader, .scrub__toggle { display: none; }
+      .scrub__panel { position: relative; }
+      .reveal { opacity: 1; transform: none; }
+    </style>
+  </noscript>
+</head>
+<body>
+  <a class="skip-link" href="#contenido">Saltar al contenido</a>
+
+  <header class="site-header" data-header data-theme="dark">
+    <a class="site-header__brand" href="#inicio">Vignoble&nbsp;Noir</a>
+    <nav class="site-header__nav" aria-label="Principal">
+      <ul class="site-header__list">
+        <li><a href="#declaracion">Declaración</a></li>
+      </ul>
+    </nav>
+  </header>
+
+  <main>
+    <section class="scrub scrub--dark" id="inicio" data-scrub data-scrub-src="assets/vino_2.mp4" data-theme="dark">
+      <div class="scrub__stage">
+        <video class="scrub__video" muted playsinline preload="none" disablepictureinpicture disableremoteplayback aria-hidden="true"></video>
+        <div class="scrub__scrim" aria-hidden="true"></div>
+        <div class="scrub__keyline" aria-hidden="true"></div>
+
+        <div class="scrub__loader" aria-hidden="true"><span></span></div>
+
+        <div class="scrub__panel">
+          <p class="eyebrow">Cava privée · Pessac-Lestonac · MDCCCXCIV</p>
+          <h1 class="wordmark"><em>Vignoble</em> Noir</h1>
+          <p class="scrub__lede">Seis viñedos. Una mesa. Cero prisa.</p>
+          <p class="scrub__cue" aria-hidden="true">Desplaza</p>
+        </div>
+
+        <div class="scrub__hud" aria-hidden="true">
+          <span class="scrub__time" data-scrub-time></span>
+          <div class="scrub__track">
+            <span class="scrub__fill"></span>
+            <span class="scrub__marker"></span>
+          </div>
+          <span class="scrub__time scrub__time--muted" data-scrub-duration></span>
+        </div>
+
+        <button class="scrub__toggle" type="button" data-scrub-toggle hidden>Reproducir</button>
+      </div>
+    </section>
+
+    <section class="statement" id="contenido" data-theme="light" aria-labelledby="declaracion">
+      <div class="statement__grid">
+        <p class="eyebrow reveal" id="declaracion">El encargo</p>
+        <h2 class="statement__title reveal">Seis viñedos,<br>una sola mesa.</h2>
+        <div class="statement__body reveal">
+          <p>La casa nació en 1894 al otro lado de la Gironde, en nueve hectáreas que se compraron porque nadie más las quiso. Hoy se trabaja seis viñedos y no hay intención de trabajar un séptimo.</p>
+          <p>La regla cabe en una frase: <em>lo que no puedas describir con una sola palabra no se embotella.</em> Nos ha costado media exportación de los Estados Unidos. Nos ha costado también que la mitad de las reseñas que nos escriban hablen del vino y no de la casa.</p>
+        </div>
+        <dl class="statement__facts reveal">
+          <div><dt>Superficie</dt><dd>9 ha</dd></div>
+          <div><dt>Viñedos</dt><dd>6</dd></div>
+          <div><dt>Trabajamos</dt><dd>2</dd></div>
+          <div><dt>Reglas</dt><dd>1</dd></div>
+        </dl>
+      </div>
+    </section>
+  </main>
+
+  <script src="js/scroll-scrub.js" defer></script>
+  <script src="js/main.js" defer></script>
+</body>
+</html>

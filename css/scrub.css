@@ -1,0 +1,251 @@
+/* ============================================================
+   SCRUB — sección de video anclada al scroll
+   El contenedor mide --scrub-length; el stage es sticky a 100vh.
+   --progress (0→1) lo escribe js/scroll-scrub.js y aquí solo se
+   consume: una propiedad custom, cero JavaScript de animación.
+   ============================================================ */
+
+.scrub {
+  position: relative;
+  height: var(--scrub-length);
+}
+
+.scrub__stage {
+  position: sticky;
+  top: 0;
+  height: 100vh;
+  height: 100svh;
+  overflow: hidden;
+  isolation: isolate;
+}
+
+.scrub__video {
+  position: absolute;
+  inset: 0;
+  z-index: var(--z-stage);
+  width: 100%;
+  height: 100%;
+  object-fit: cover;
+  background: var(--noche);
+}
+
+.scrub__scrim {
+  position: absolute;
+  inset: 0;
+  z-index: 1;
+}
+
+.scrub__keyline {
+  position: absolute;
+  inset: 0;
+  z-index: 3;
+  border: var(--keyline) solid transparent;
+  pointer-events: none;
+  transition: border-color var(--dur) var(--ease);
+}
+
+.scrub[data-state="ready"] .scrub__keyline {
+  border-color: var(--line-dark);
+}
+
+/* --- Variante oscura: la ventana a la sala ----------------- */
+.scrub--dark {
+  background: var(--noche);
+}
+
+.scrub--dark .scrub__scrim {
+  background:
+    linear-gradient(
+      to top,
+      rgba(23, 16, 15, 0.94) 0%,
+      rgba(23, 16, 15, 0.52) 34%,
+      rgba(23, 16, 15, 0) 66%
+    ),
+    linear-gradient(
+      to bottom,
+      rgba(23, 16, 15, 0.6) 0%,
+      rgba(23, 16, 15, 0) 28%
+    );
+}
+
+.scrub--dark .scrub__stage {
+  color: var(--hueso);
+}
+
+.scrub--dark .scrub__lede {
+  color: var(--hueso-2);
+}
+
+/* --- Panel de texto ---------------------------------------- */
+.scrub__panel {
+  position: absolute;
+  inset: auto 0 0;
+  z-index: var(--z-panel);
+  display: grid;
+  gap: var(--space-m);
+  padding: var(--space-3xl) var(--gutter) var(--space-2xl);
+  transition: opacity var(--dur-slow) var(--ease);
+}
+
+.scrub[data-state="loading"] .scrub__panel {
+  opacity: 0.25;
+}
+
+.wordmark {
+  margin: 0;
+  font-family: var(--font-display);
+  font-size: var(--fs-wordmark);
+  font-weight: 500;
+  line-height: var(--leading-display);
+  letter-spacing: var(--tracking-display);
+  color: var(--hueso);
+  transform: translate3d(0, calc(var(--progress, 0) * -3rem), 0);
+  will-change: transform;
+}
+
+.wordmark em {
+  font-weight: 400;
+}
+
+.scrub__lede {
+  max-width: var(--measure);
+  font-size: var(--fs-lede);
+  font-weight: 400;
+  line-height: 1.5;
+}
+
+.scrub__cue {
+  display: flex;
+  align-items: center;
+  gap: var(--space-s);
+  font-size: var(--step--1);
+  font-weight: 500;
+  letter-spacing: var(--tracking-wide);
+  text-transform: uppercase;
+  color: var(--hueso-2);
+  opacity: calc(1 - min(var(--progress, 0) * 5, 1));
+}
+
+.scrub__cue::before {
+  content: "";
+  width: clamp(2.5rem, 8vw, 5rem);
+  height: var(--keyline);
+  background: var(--vino-300);
+}
+
+/* --- Raíl de progreso + reloj ------------------------------ */
+.scrub__hud {
+  position: absolute;
+  top: 50%;
+  right: var(--gutter);
+  z-index: var(--z-panel);
+  display: grid;
+  justify-items: center;
+  gap: var(--space-s);
+  transform: translateY(-50%);
+  opacity: 0;
+  transition: opacity var(--dur) var(--ease);
+}
+
+.scrub[data-state="ready"] .scrub__hud {
+  opacity: 1;
+}
+
+.scrub__time {
+  font-size: var(--step--1);
+  font-weight: 500;
+  letter-spacing: var(--tracking-wide);
+  font-variant-numeric: tabular-nums;
+  color: var(--hueso);
+}
+
+.scrub__time--muted {
+  color: var(--hueso-3);
+}
+
+.scrub__track {
+  position: relative;
+  width: var(--keyline);
+  height: min(34vh, 19rem);
+  background: var(--line-dark);
+}
+
+.scrub__fill {
+  position: absolute;
+  inset: 0 0 auto;
+  height: calc(4px + (100% - 8px) * var(--progress, 0));
+  background: var(--vino-300);
+}
+
+.scrub__marker {
+  position: absolute;
+  left: 50%;
+  top: calc(4px + (100% - 8px) * var(--progress, 0));
+  width: 7px;
+  height: 7px;
+  background: var(--vino-300);
+  transform: translate(-50%, -50%) rotate(45deg);
+}
+
+/* --- Estado de carga --------------------------------------- */
+.scrub__loader {
+  position: absolute;
+  top: 7rem;
+  left: 50%;
+  z-index: var(--z-panel);
+  width: min(11rem, 40vw);
+  height: var(--keyline);
+  overflow: hidden;
+  background: var(--line-dark);
+  opacity: 0;
+  transform: translateX(-50%);
+  transition: opacity var(--dur) var(--ease);
+}
+
+.scrub[data-state="loading"] .scrub__loader {
+  opacity: 1;
+}
+
+.scrub__loader span {
+  display: block;
+  width: 40%;
+  height: 100%;
+  background: var(--vino-300);
+  animation: vn-loader 1400ms var(--ease) infinite;
+}
+
+@keyframes vn-loader {
+  from { transform: translateX(-110%); }
+  to   { transform: translateX(360%); }
+}
+
+/* --- Modo respaldo: sin scrub ------------------------------ */
+.scrub[data-mode="loop"] {
+  height: auto;
+}
+
+.scrub[data-mode="loop"] .scrub__stage {
+  position: relative;
+  height: auto;
+  min-height: 78vh;
+}
+
+.scrub[data-mode="loop"] .scrub__hud,
+.scrub[data-mode="loop"] .scrub__loader,
+.scrub[data-mode="loop"] .scrub__cue {
+  display: none;
+}
+
+.scrub[data-mode="loop"] .wordmark {
+  transform: none;
+}
+
+.scrub[data-mode="loop"] .scrub__video {
+  position: absolute;
+}
+
+@media (hover: none) {
+  .scrub__cue {
+    display: none;
+  }
+}
