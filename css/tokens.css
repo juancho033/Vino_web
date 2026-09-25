@@ -61,6 +61,16 @@
   --section-y-lg: var(--space-4xl);
   --gutter: clamp(1.25rem, 5vw, 5rem);
 
+  /* Rejilla de la carta. El mínimo del marco es 13rem, no una
+     fracción: por debajo de eso la etiqueta tipográfica del
+     respaldo ya no cabe en dos lineas. */
+  /* Ancho minimo de una tarjeta. El numero no es arbitrario:
+   con 13rem salen 6 columnas a 1440px, y seis botellas de 229px
+   de ancho no se leen, se cataloguean. Con 20rem salen 3, que es
+   la rejilla de una carta de verdad: dos filas de tres. */
+  --wine-min: 20rem;
+  --wine-gap: var(--space-l);
+
   /* --- COLOR — rampa de un solo tono ----------------------- */
   --paper: #f7f4ee;
   --paper-raised: #ffffff;
@@ -105,6 +115,10 @@
   --border-dark: 1px solid var(--line-dark);
   --shadow: none;
   --shadow-float: none;
+
+  /* El distintivo de un importador. 2,5rem son 40px: se lee como
+     un sello impreso, no como un icono de aplicación. */
+  --sello: 2.5rem;
 
   /* --- MOVIMIENTO ------------------------------------------ */
   --dur-fast: 120ms;

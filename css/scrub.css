@@ -10,6 +10,15 @@
   height: var(--scrub-length);
 }
 
+/* El hero y la vendimia no duran lo mismo. El hero abre la pagina
+   y tiene que aguantar el recorrido; la vendimia es un solo
+   concepto, asi que su riel es mas corto. Con el mismo
+   `--scrub-length` de tres pantallas, la vendimia se sintia como
+   un fallo de scroll. */
+.scrub--corta {
+  height: calc(var(--scrub-length) * 0.62);
+}
+
 .scrub__stage {
   position: sticky;
   top: 0;
@@ -253,3 +262,88 @@
     display: none;
   }
 }
+
+/* --- Segundo scrub: la vendimia -----------------------------
+   Es el mismo motor, pero con una seccion mas corta: la
+   vendimia es un momento, no una apertura. Un riel de scroll de
+   tres pantallas para un solo concepto hace que el usuario piense
+   que se le ha colado algo. */
+.scrub__titulo {
+  font-family: var(--font-display);
+  font-size: var(--fs-display);
+  font-weight: 400;
+  line-height: var(--leading-display);
+  letter-spacing: var(--tracking-display);
+  color: var(--hueso);
+  max-width: 18ch;
+}
+
+/* --- Loop ambiental: la finca ------------------------------
+   No es un scrub, asi que no tiene el motor de sticky. Es un
+   video decorativo en loop, con el texto encima. */
+.ambiente {
+  background: var(--noche);
+  border-block: var(--keyline) solid var(--line-dark);
+}
+
+.ambiente__stage {
+  position: relative;
+  display: grid;
+  min-height: 88vh;
+  min-height: 88dvh;
+  overflow: hidden;
+  isolation: isolate;
+}
+
+.ambiente__video {
+  position: absolute;
+  inset: 0;
+  z-index: 0;
+  width: 100%;
+  height: 100%;
+  object-fit: cover;
+  background: var(--noche-2);
+}
+
+.ambiente__scrim {
+  position: absolute;
+  inset: 0;
+  z-index: 1;
+  background: linear-gradient(
+    100deg,
+    var(--noche) 0%,
+    color-mix(in oklab, var(--noche) 78%, transparent) 46%,
+    color-mix(in oklab, var(--noche) 28%, transparent) 100%
+  );
+}
+
+.ambiente__panel {
+  position: relative;
+  z-index: var(--z-panel);
+  align-self: center;
+  max-width: var(--measure-wide);
+  padding: var(--space-2xl) var(--gutter);
+  color: var(--hueso);
+}
+
+.ambiente__titulo {
+  font-family: var(--font-display);
+  font-size: var(--fs-display);
+  font-weight: 400;
+  line-height: var(--leading-display);
+  letter-spacing: var(--tracking-display);
+  color: var(--hueso);
+  margin-block: var(--space-s) var(--space-m);
+}
+
+.ambiente__texto {
+  max-width: var(--measure);
+  font-size: var(--fs-lede);
+  color: var(--hueso-2);
+}
+
+/* Con `prefers-reduced-motion` y sin JS, nadie llama a play(): el
+   poster del <video> es lo unico que se ve, y es lo correcto. No
+   hace falta ninguna regla CSS para eso, asi que no hay ninguna.
+   Lo que si hace falta es que el poster no desaparezca: por eso
+   el `preload="none"` del HTML y no un preload automatico. */

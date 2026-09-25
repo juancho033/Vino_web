@@ -192,15 +192,13 @@
     window.addEventListener("orientationchange", remeasure);
 
     document.addEventListener("visibilitychange", function () {
-      if (document.hidden) self.stop();
-      else self.onScroll();
+      self.setVisible(!document.hidden);
     });
 
     this.observer = new IntersectionObserver(
       function (entries) {
         for (var i = 0; i < entries.length; i++) {
-          if (entries[i].isIntersecting) self.onScroll();
-          else self.stop();
+          self.setVisible(entries[i].isIntersecting);
         }
       },
       { rootMargin: "25% 0px" }
@@ -429,6 +427,38 @@
       var attempt = this.video.play();
       if (attempt && typeof attempt.catch === "function") {
         attempt.catch(function () {});
+      }
+    }
+  };
+
+  /* Un scrub en modo loop reproduce solo, sin rAF, asi que
+     `stop()` no lo detiene: el <video> sigue decodificando aunque
+     la seccion este fuera de pantalla. Con dos scrubs en la misma
+     pagina eso son dos videos reproduciendose a la vez, fuera de
+     pantalla, quemando CPU y bateria.
+
+     En modo scrub el video ya esta pausado y solo se mueve por
+     seek, asi que aqui solo hace falta cubrir el caso loop. */
+  Scrub.prototype.setVisible = function (visible) {
+    if (this.el.getAttribute("data-mode") !== "loop") {
+      if (visible) this.onScroll();
+      else this.stop();
+      return;
+    }
+
+    if (visible) {
+      /* No reanudamos si el usuario pauso a mano: el boton
+         guarda esa intencion en aria-pressed. */
+      var usuarioPauso = this.toggleBtn && this.toggleBtn.getAttribute("aria-pressed") === "false";
+      if (!this.reduced.matches && !usuarioPauso && this.video.paused) {
+        var attempt = this.video.play();
+        if (attempt && typeof attempt.catch === "function") attempt.catch(function () {});
+      }
+    } else if (!this.video.paused) {
+      this.video.pause();
+      if (this.toggleBtn) {
+        this.toggleBtn.textContent = "Reproducir";
+        this.toggleBtn.setAttribute("aria-pressed", "false");
       }
     }
   };

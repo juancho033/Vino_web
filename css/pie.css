@@ -1,0 +1,198 @@
+/* ============================================================
+   PIE — importadores verificados y pie de página
+   Dirección: la última página de un catálogo impreso. Un muro
+   de distintivos sobre papel, y debajo un pie que solo dice lo
+   necesario. Filetes de 1px, cero radios, cero sombras.
+   ============================================================ */
+
+/* --- IMPORTADORES VERIFICADOS --------------------------------- */
+
+.importadores {
+  background: var(--paper);
+  border-top: var(--keyline) solid var(--line);
+}
+
+.importadores__head {
+  display: grid;
+  gap: var(--space-s);
+  max-width: var(--measure-wide);
+  margin-bottom: var(--space-2xl);
+}
+
+.importadores__titulo {
+  font-family: var(--font-display);
+  font-size: var(--fs-display);
+  font-weight: 400;
+  line-height: var(--leading-display);
+  letter-spacing: var(--tracking-display);
+  color: var(--ink);
+}
+
+.importadores__intro {
+  max-width: var(--measure);
+  color: var(--ink-2);
+}
+
+/* --- Muro de distintivos ---------------------------------------- */
+
+/* Los filetes van en el contenedor y a la derecha y abajo de cada
+   celda, no entre celdas: con `border-inline` en la celda, el
+   borde izquierdo duplica al de la vecina y sale un filete de
+   2px en cada unión. Con este reparto, todas las líneas miden
+   exactamente 1px. */
+.importadores__muro {
+  display: grid;
+  grid-template-columns: repeat(auto-fit, minmax(min(13rem, 100%), 1fr));
+  border-top: var(--keyline) solid var(--line-strong);
+  border-left: var(--keyline) solid var(--line);
+}
+
+.importador {
+  display: grid;
+  gap: var(--space-2xs);
+  align-content: start;
+  justify-items: center;
+  padding: var(--space-xl) var(--space-m);
+  text-align: center;
+  border-right: var(--keyline) solid var(--line);
+  border-bottom: var(--keyline) solid var(--line);
+  transition: background-color var(--dur) var(--ease);
+}
+
+@media (hover: hover) {
+  .importador:hover {
+    background: var(--paper-sunk);
+  }
+}
+
+.importador__sello {
+  width: var(--sello);
+  height: var(--sello);
+  margin-bottom: var(--space-3xs);
+  color: var(--vino-700);
+}
+
+.importador__nombre {
+  font-family: var(--font-display);
+  font-size: var(--step-1);
+  font-weight: 500;
+  line-height: 1.15;
+  letter-spacing: var(--tracking-display);
+  color: var(--ink);
+}
+
+.importador__mercado {
+  font-size: var(--step--2);
+  letter-spacing: var(--tracking-wide);
+  text-transform: uppercase;
+  color: var(--ink-3);
+}
+
+.importadores__nota {
+  max-width: var(--measure);
+  margin-top: var(--space-xl);
+  padding-top: var(--space-m);
+  border-top: var(--keyline) solid var(--line);
+  font-size: var(--step--2);
+  letter-spacing: 0.02em;
+  color: var(--ink-3);
+}
+
+/* --- PIE DE PÁGINA --------------------------------------------- */
+
+.site-foot {
+  padding-block: var(--space-2xl) var(--space-l);
+  background: var(--noche);
+  color: var(--hueso);
+  border-top: var(--keyline) solid var(--line-dark);
+}
+
+.site-foot__grid {
+  display: grid;
+  grid-template-columns: repeat(12, 1fr);
+  gap: var(--space-xl) var(--space-l);
+  align-items: start;
+}
+
+.site-foot__marca {
+  grid-column: 1 / 5;
+  font-family: var(--font-display);
+  font-size: var(--fs-title);
+  font-weight: 500;
+  line-height: 1;
+  letter-spacing: var(--tracking-display);
+  color: var(--hueso);
+}
+
+.site-foot__nav {
+  grid-column: 6 / 9;
+}
+
+.site-foot__lista {
+  display: grid;
+  gap: var(--space-3xs);
+}
+
+.site-foot__contacto {
+  grid-column: 9 / 13;
+  display: grid;
+  gap: var(--space-3xs);
+  font-size: var(--step--1);
+  line-height: 1.5;
+  color: var(--hueso-2);
+}
+
+.site-foot__legal {
+  grid-column: 1 / 13;
+  display: flex;
+  flex-wrap: wrap;
+  gap: var(--space-2xs) var(--space-l);
+  justify-content: space-between;
+  padding-top: var(--space-m);
+  border-top: var(--keyline) solid var(--line-dark-soft);
+  font-size: var(--step--1);
+  letter-spacing: var(--tracking-wide);
+  text-transform: uppercase;
+  color: var(--hueso-3);
+  font-variant-numeric: tabular-nums;
+}
+
+/* Los enlaces del pie son 44px de alto en vertical, no 20px. Con
+   `inline-block` y padding de bloque, el target táctil se cumple
+   sin agrandar la tipografía ni romper la lista. */
+.site-foot__lista a,
+.site-foot__contacto a {
+  display: inline-block;
+  padding-block: var(--space-2xs);
+  font-size: var(--step--1);
+  color: var(--hueso-2);
+  transition: color var(--dur-fast) var(--ease);
+}
+
+.site-foot__contacto a {
+  align-self: start;
+  text-decoration: underline;
+  text-underline-offset: 0.2em;
+  text-decoration-color: var(--line-dark);
+}
+
+@media (hover: hover) {
+  .site-foot__lista a:hover {
+    color: var(--hueso);
+  }
+
+  .site-foot__contacto a:hover {
+    color: var(--vino-200);
+  }
+}
+
+/* --- Responsive ------------------------------------------------ */
+
+@media (max-width: 60rem) {
+  .site-foot__marca,
+  .site-foot__nav,
+  .site-foot__contacto,
+  .site-foot__legal {
+    grid-column: 1 / 13;
+  }
+}

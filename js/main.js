@@ -24,7 +24,15 @@
     window.addEventListener("scroll", onScroll, { passive: true });
     onScroll();
 
-    var sections = document.querySelectorAll("main [data-theme]");
+    /* Se observan TODOS los `[data-theme]`, no solo los de `main`:
+       el pie de pagina esta fuera de `main` y es oscuro. Con
+       `main [data-theme]` la cabecera se quedaba en el tema
+       claro de los importadores mientras la recortaba el pie
+       negro, con el texto del menu en crema sobre casi negro.
+
+       El propio header se excluye: si se observara a si mismo,
+       su `data-theme` se realimentaria sin cambiar nunca. */
+    var sections = document.querySelectorAll("[data-theme]:not([data-header])");
     if (!sections.length) return;
 
     var band = new IntersectionObserver(
@@ -72,6 +80,8 @@
 
   function start() {
     if (typeof VN.initScrollScrub === "function") VN.initScrollScrub();
+    if (typeof VN.initAmbiente === "function") VN.initAmbiente();
+    if (typeof VN.initCatalogo === "function") VN.initCatalogo();
     headerTheme();
     reveals();
   }

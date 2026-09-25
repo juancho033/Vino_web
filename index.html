@@ -15,7 +15,9 @@
   <link rel="stylesheet" href="css/tokens.css">
   <link rel="stylesheet" href="css/base.css">
   <link rel="stylesheet" href="css/components.css">
+  <link rel="stylesheet" href="css/carta.css">
   <link rel="stylesheet" href="css/scrub.css">
+  <link rel="stylesheet" href="css/pie.css">
 
   <noscript>
     <style>
@@ -24,7 +26,12 @@
       .scrub__video { position: relative; height: auto; aspect-ratio: 16 / 9; }
       .scrub__hud, .scrub__loader, .scrub__toggle { display: none; }
       .scrub__panel { position: relative; }
+      .carta__filtros { display: none; }
       .reveal { opacity: 1; transform: none; }
+      /* Sin JS el ambiente no arranca nunca, asi que se queda en
+         el poster. Hay que darle la altura: sin esto colapsa a
+         cero y la seccion desaparece entera. */
+      .ambiente__stage { min-height: 60vh; }
     </style>
   </noscript>
 </head>
@@ -36,6 +43,8 @@
     <nav class="site-header__nav" aria-label="Principal">
       <ul class="site-header__list">
         <li><a href="#declaracion">Declaración</a></li>
+        <li><a href="#carta">Carta</a></li>
+        <li><a href="#importadores">Distribución</a></li>
       </ul>
     </nav>
   </header>
@@ -85,9 +94,319 @@
         </dl>
       </div>
     </section>
+    <section class="section carta" id="carta" data-theme="light" aria-labelledby="carta-titulo">
+      <div class="shell">
+        <header class="carta__head">
+          <p class="eyebrow">La carta</p>
+          <h2 class="carta__titulo" id="carta-titulo">Seis vinos,<br>seis parcelas.</h2>
+          <p class="carta__intro">Cada botella viene de una parcela y de una añada. No hay mezcla que no se pueda defender con el nombre de un suelo.</p>
+        </header>
+
+        <div data-catalogo>
+          <!-- Los filtros solo existen con JS: sin JS no hay nada que filtrar. -->
+          <div class="carta__filtros" data-catalogo-filters hidden></div>
+
+          <div class="carta__barra">
+            <p class="carta__conteo" data-catalogo-count aria-live="polite">6 vinos</p>
+            <!-- Región viva separada: el conteo visible dice "6 vinos", este
+                 anuncia el resultado del filtro sin duplicar el texto visible. -->
+            <p class="sr-only" role="status" data-catalogo-live></p>
+          </div>
+
+          <ul class="carta__lista" data-catalogo-grid>
+            <!-- Fallback sin JS: los seis vinos, visibles y legibles.
+                 catalogo.js reconstruye esta lista cuando arranca; sin él,
+                 esta es la carta que el usuario ve. -->
+            <li class="wine">
+              <div class="wine__frame">
+                <img class="wine__img" src="assets/wines/graves-1994.webp" alt="Graves 1994" width="1200" height="1800" loading="lazy" decoding="async">
+              </div>
+              <div class="wine__head">
+                <span class="wine__tipo" data-tipo="tinto">Tinto</span>
+                <h3 class="wine__name">Graves</h3>
+                <span class="wine__ano">1994</span>
+              </div>
+              <p class="wine__nota">Clavo, grafito, hoja de tabaco. El que se sirve cuando no hay nada que demostrar.</p>
+              <dl class="wine__specs">
+                <div class="wine__spec"><dt>Uva</dt><dd>Cabernet Sauvignon</dd></div>
+                <div class="wine__spec"><dt>Parcela</dt><dd>Graves, 1958</dd></div>
+                <div class="wine__spec"><dt>Alcohol</dt><dd>13,0%</dd></div>
+              </dl>
+              <p class="wine__facts">9 ha - gravas gruesas - 11 meses en barrica</p>
+            </li>
+            <li class="wine">
+              <div class="wine__frame">
+                <img class="wine__img" src="assets/wines/argile-1998.webp" alt="Argile 1998" width="1200" height="1500" loading="lazy" decoding="async">
+              </div>
+              <div class="wine__head">
+                <span class="wine__tipo" data-tipo="tinto">Tinto</span>
+                <h3 class="wine__name">Argile</h3>
+                <span class="wine__ano">1998</span>
+              </div>
+              <p class="wine__nota">Arcilla pura. Guinda, cacao, un fondo de canela que aparece a los diez minutos.</p>
+              <dl class="wine__specs">
+                <div class="wine__spec"><dt>Uva</dt><dd>Merlot</dd></div>
+                <div class="wine__spec"><dt>Parcela</dt><dd>Argile, 1963</dd></div>
+                <div class="wine__spec"><dt>Alcohol</dt><dd>13,5%</dd></div>
+              </dl>
+              <p class="wine__facts">9 ha - arcilla roja - 14 meses en barrica</p>
+            </li>
+            <li class="wine">
+              <div class="wine__frame">
+                <img class="wine__img" src="assets/wines/gravel-deep-2001.webp" alt="Gravel profound 2001" width="1200" height="1798" loading="lazy" decoding="async">
+              </div>
+              <div class="wine__head">
+                <span class="wine__tipo" data-tipo="tinto">Tinto</span>
+                <h3 class="wine__name">Gravel profound</h3>
+                <span class="wine__ano">2001</span>
+              </div>
+              <p class="wine__nota">La parcela que se plantó para no parecerse a las otras. Ciruela negra, pimienta blanca, tanino largo.</p>
+              <dl class="wine__specs">
+                <div class="wine__spec"><dt>Uva</dt><dd>Cabernet Franc</dd></div>
+                <div class="wine__spec"><dt>Parcela</dt><dd>Gravel profound, 1971</dd></div>
+                <div class="wine__spec"><dt>Alcohol</dt><dd>12,5%</dd></div>
+              </dl>
+              <p class="wine__facts">9 ha - grava a 18 m - barrica de 24 meses</p>
+            </li>
+            <li class="wine">
+              <div class="wine__frame">
+                <img class="wine__img" src="assets/wines/ferrugineux-2016.webp" alt="Ferrugineux 2016" width="1200" height="1798" loading="lazy" decoding="async">
+              </div>
+              <div class="wine__head">
+                <span class="wine__tipo" data-tipo="tinto">Tinto</span>
+                <h3 class="wine__name">Ferrugineux</h3>
+                <span class="wine__ano">2016</span>
+              </div>
+              <p class="wine__nota">Cuarenta por ciento de la mezcla. Estructura de piedra, no de fruta. Es el vino que envejece mejor de la lista.</p>
+              <dl class="wine__specs">
+                <div class="wine__spec"><dt>Uva</dt><dd>Petit Verdot</dd></div>
+                <div class="wine__spec"><dt>Parcela</dt><dd>Ferrugineux, 1968</dd></div>
+                <div class="wine__spec"><dt>Alcohol</dt><dd>14,0%</dd></div>
+              </dl>
+              <p class="wine__facts">9 ha - suelo ferruginoso - tonneaux de 600 L</p>
+            </li>
+            <li class="wine">
+              <div class="wine__frame">
+                <img class="wine__img" src="assets/wines/blanc-sec-2019.webp" alt="Blanc sec 2019" width="1200" height="2132" loading="lazy" decoding="async">
+              </div>
+              <div class="wine__head">
+                <span class="wine__tipo" data-tipo="blanco">Blanco</span>
+                <h3 class="wine__name">Blanc sec</h3>
+                <span class="wine__ano">2019</span>
+              </div>
+              <p class="wine__nota">Fermentado en barrica, sin maloláctica. Cítrico, tiza, una mineralidad que se nota en el final de la boca.</p>
+              <dl class="wine__specs">
+                <div class="wine__spec"><dt>Uva</dt><dd>Sauvignon Blanc</dd></div>
+                <div class="wine__spec"><dt>Parcela</dt><dd>Blanc sec, 1977</dd></div>
+                <div class="wine__spec"><dt>Alcohol</dt><dd>12,0%</dd></div>
+              </dl>
+              <p class="wine__facts">9 ha - 11 meses en barrica - fermentación lenta</p>
+            </li>
+            <li class="wine">
+              <div class="wine__frame">
+                <img class="wine__img" src="assets/wines/rose-de-table-2021.webp" alt="Rosé de table 2021" width="1200" height="1720" loading="lazy" decoding="async">
+              </div>
+              <div class="wine__head">
+                <span class="wine__tipo" data-tipo="rosado">Rosado</span>
+                <h3 class="wine__name">Rosé de table</h3>
+                <span class="wine__ano">2021</span>
+              </div>
+              <p class="wine__nota">Prensa directa, cuatro horas de contacto. Seco de una manera que en un rosado casi parece un error.</p>
+              <dl class="wine__specs">
+                <div class="wine__spec"><dt>Uva</dt><dd>Cabernet Franc</dd></div>
+                <div class="wine__spec"><dt>Parcela</dt><dd>Rosé de table, 1982</dd></div>
+                <div class="wine__spec"><dt>Alcohol</dt><dd>12,0%</dd></div>
+              </dl>
+              <p class="wine__facts">9 ha - prensa directa - 4 horas de contacto</p>
+            </li>
+          </ul>
+        </div>
+
+        <p class="carta__nota">Las añadas disponibles cambian con la añada. Escribir a <a href="mailto:cava@vignoblenoir.example">cava@vignoblenoir.example</a> para el estado del día.</p>
+      </div>
+    </section>
+
+    <!-- Loop ambiental. Es `vino_loop.mp4`, que es `vino.mp4`
+         re-codificado: el original venia fragmentado y sin
+         faststart, y un clip decorativo fragmentado hace un
+         seek por cada buffer en vez de cargar de una vez. 902 KB
+         -> 1,1 MB, a cambio de arranque limpio.
+         `poster` no es adorno: con `prefers-reduced-motion` o sin
+         JS, el navegador nunca llama a play(), asi que sin poster
+         esta seccion seria un rectangulo negro. -->
+    <section class="ambiente scrub--dark" id="terreno" data-theme="dark" aria-labelledby="terreno-titulo">
+      <div class="ambiente__stage">
+        <video class="ambiente__video" src="assets/vino_loop.mp4" poster="assets/poster-terreno.jpg" muted loop playsinline preload="none" disablepictureinpicture disableremoteplayback aria-hidden="true" data-ambiente></video>
+        <div class="ambiente__scrim" aria-hidden="true"></div>
+        <div class="ambiente__panel">
+          <p class="eyebrow">La finca</p>
+          <h2 class="ambiente__titulo" id="terreno-titulo">Todo empieza<br>en el suelo.</h2>
+          <p class="ambiente__texto">Nueve hectáreas al otro lado de la Gironde. La casa no compra uva: sube a las laderas, prueba parcela por parcela y descarta lo que no sepa decir con una sola palabra. De seis viñedos, dos llegaron a embotellarse. Los otros cuatro son suelo.</p>
+        </div>
+      </div>
+    </section>
+
+    <!-- Segundo scrub, con `vino_cena_scrub.mp4`. El motor de
+         scroll-scrub.js ya instancia todos los `[data-scrub]`
+         que encuentra, asi que esto es solo markup: ninguna
+         logica nueva. Su presupuesto de seek es propio, porque
+         este clip va a 29,97 fps y no a 25 como el hero. -->
+    <section class="scrub scrub--dark scrub--corta" id="vendimia" data-scrub data-scrub-src="assets/vino_cena_scrub.mp4" data-scrub-fps="29.97" data-scrub-budget="28" data-theme="dark" aria-labelledby="vendimia-titulo">
+      <div class="scrub__stage">
+        <video class="scrub__video" muted playsinline preload="none" disablepictureinpicture disableremoteplayback aria-hidden="true"></video>
+        <div class="scrub__scrim" aria-hidden="true"></div>
+        <div class="scrub__keyline" aria-hidden="true"></div>
+
+        <div class="scrub__loader" aria-hidden="true"><span></span></div>
+
+        <div class="scrub__panel">
+          <p class="eyebrow">Vendimia</p>
+          <h2 class="scrub__titulo" id="vendimia-titulo">Cuarenta días<br>decidiendo.</h2>
+          <p class="scrub__lede">Del primer corte al último tinte. La vendimia no es una fecha, es una conversación con el día que toca.</p>
+        </div>
+
+        <div class="scrub__hud" aria-hidden="true">
+          <span class="scrub__time" data-scrub-time></span>
+          <div class="scrub__track">
+            <span class="scrub__fill"></span>
+            <span class="scrub__marker"></span>
+          </div>
+          <span class="scrub__time scrub__time--muted" data-scrub-duration></span>
+        </div>
+
+        <button class="scrub__toggle" type="button" data-scrub-toggle hidden>Reproducir</button>
+      </div>
+    </section>
+
+    <!-- Los distintivos son SVG en línea, no archivos. Un muro de
+         seis PNG de 512px serían del orden de 90 kB para pintar
+         seis formas de 40px; en línea son cero peticiones y se ve
+         nítido en cualquier densidad de pantalla. Todos están
+         dibujados con el mismo grosor y currentColor, así que
+         heredan el tono del token sin CSS por cada uno.
+
+         Nombres y marcas son inventados. Poner logotipos de
+         importadores reales afirmaría una relación comercial que
+         no existe. -->
+    <section class="section importadores" id="importadores" data-theme="light" aria-labelledby="importadores-titulo">
+      <div class="shell">
+        <header class="importadores__head">
+          <p class="eyebrow reveal">Distribución</p>
+          <h2 class="importadores__titulo reveal" id="importadores-titulo">Seis casas<br>que pagan antes.</h2>
+          <p class="importadores__intro reveal">Ninguna de estas seis lleva una botella sin haber subido a la cava. Se visita una vez al año, se prueba lo que sale ese día y se manda lo mismo que se fue.</p>
+        </header>
+
+        <ul class="importadores__muro">
+          <li class="importador reveal">
+            <svg class="importador__sello" viewBox="0 0 32 32" aria-hidden="true" focusable="false">
+              <g fill="none" stroke="currentColor" stroke-width="1.5" stroke-linecap="round" stroke-linejoin="round">
+                <circle cx="16" cy="6.5" r="2.6" />
+                <circle cx="10.5" cy="12" r="2.6" />
+                <circle cx="16" cy="12" r="2.6" />
+                <circle cx="21.5" cy="12" r="2.6" />
+                <circle cx="10.5" cy="17.5" r="2.6" />
+                <circle cx="16" cy="17.5" r="2.6" />
+                <circle cx="21.5" cy="17.5" r="2.6" />
+                <circle cx="16" cy="23" r="2.6" />
+                <path d="M16 3.9V1.5" />
+              </g>
+            </svg>
+            <span class="importador__nombre">Celler &amp; Roth</span>
+            <span class="importador__mercado">Bremen · Alemania</span>
+          </li>
+          <li class="importador reveal">
+            <svg class="importador__sello" viewBox="0 0 32 32" aria-hidden="true" focusable="false">
+              <g fill="none" stroke="currentColor" stroke-width="1.5" stroke-linecap="round" stroke-linejoin="round">
+                <circle cx="16" cy="16" r="11" />
+                <circle cx="16" cy="16" r="7.4" />
+                <path d="M16 11.5 20.5 16 16 20.5 11.5 16Z" />
+              </g>
+            </svg>
+            <span class="importador__nombre">Casa Verdial</span>
+            <span class="importador__mercado">Madrid · España</span>
+          </li>
+          <li class="importador reveal">
+            <svg class="importador__sello" viewBox="0 0 32 32" aria-hidden="true" focusable="false">
+              <g fill="none" stroke="currentColor" stroke-width="1.5" stroke-linecap="round" stroke-linejoin="round">
+                <path d="M13.8 4.5h4.4v5.8l2.8 5.4V28H11V15.7l2.8-5.4z" />
+                <path d="M13.8 9.6h4.4" />
+              </g>
+            </svg>
+            <span class="importador__nombre">Azienda Nord</span>
+            <span class="importador__mercado">Milano · Italia</span>
+          </li>
+          <li class="importador reveal">
+            <svg class="importador__sello" viewBox="0 0 32 32" aria-hidden="true" focusable="false">
+              <g fill="none" stroke="currentColor" stroke-width="1.5" stroke-linecap="round" stroke-linejoin="round">
+                <path d="M9.5 7.5h13l-2.4 9.2a4.6 4.6 0 0 1-8.2 0z" />
+                <path d="M11.3 12.5h9.4" />
+                <path d="M16 21.3V26" />
+                <path d="M11.8 26h8.4" />
+              </g>
+            </svg>
+            <span class="importador__nombre">Tanner &amp; Locke</span>
+            <span class="importador__mercado">Nueva York · Estados Unidos</span>
+          </li>
+          <li class="importador reveal">
+            <svg class="importador__sello" viewBox="0 0 32 32" aria-hidden="true" focusable="false">
+              <g fill="none" stroke="currentColor" stroke-width="1.5" stroke-linecap="round" stroke-linejoin="round">
+                <path d="M16 4.5v23" />
+                <path d="M16 8.5c5.5 0 6 5 3 6.6" />
+                <ellipse cx="9" cy="13" rx="4.8" ry="2.5" transform="rotate(-32 9 13)" />
+                <ellipse cx="23" cy="19.5" rx="4.8" ry="2.5" transform="rotate(32 23 19.5)" />
+                <ellipse cx="9.5" cy="24" rx="4.8" ry="2.5" transform="rotate(-32 9.5 24)" />
+              </g>
+            </svg>
+            <span class="importador__nombre">Nordvik Vinhandel</span>
+            <span class="importador__mercado">Oslo · Noruega</span>
+          </li>
+          <li class="importador reveal">
+            <svg class="importador__sello" viewBox="0 0 32 32" aria-hidden="true" focusable="false">
+              <g fill="none" stroke="currentColor" stroke-width="1.5" stroke-linecap="round" stroke-linejoin="round">
+                <rect x="6.5" y="8" width="19" height="16" rx="3" />
+                <path d="M6.5 13.5h19M6.5 18.5h19" />
+                <path d="M11 8v16M21 8v16" />
+              </g>
+            </svg>
+            <span class="importador__nombre">Sala &amp; Ombra</span>
+            <span class="importador__mercado">São Paulo · Brasil</span>
+          </li>
+        </ul>
+
+        <p class="importadores__nota reveal">Vignoble Noir es un proyecto ficticio. Las seis casas, sus nombres y sus distintivos están inventados y no corresponden a ningún importador real.</p>
+      </div>
+    </section>
   </main>
 
+  <footer class="site-foot" data-theme="dark">
+    <div class="shell site-foot__grid">
+      <p class="site-foot__marca"><em>Vignoble</em> Noir</p>
+
+      <nav class="site-foot__nav" aria-label="Del pie de página">
+        <ul class="site-foot__lista">
+          <li><a href="#contenido">La casa</a></li>
+          <li><a href="#carta">La carta</a></li>
+          <li><a href="#terreno">La finca</a></li>
+          <li><a href="#importadores">Distribución</a></li>
+        </ul>
+      </nav>
+
+      <div class="site-foot__contacto">
+        <p>Cava privada · Pessac-Lestonac</p>
+        <a href="mailto:cava@vignoblenoir.example">cava@vignoblenoir.example</a>
+      </div>
+
+      <p class="site-foot__legal">
+        <span>MDCCCXCIV</span>
+        <span>Proyecto ficticio · 2026</span>
+      </p>
+    </div>
+  </footer>
+
   <script src="js/scroll-scrub.js" defer></script>
+  <script src="js/ambiente.js" defer></script>
+  <script src="js/data.js" defer></script>
+  <script src="js/catalogo.js" defer></script>
   <script src="js/main.js" defer></script>
 </body>
 </html>
