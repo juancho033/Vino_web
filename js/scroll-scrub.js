@@ -73,6 +73,21 @@
      Sobrescribible por sección con data-scrub-budget. */
   var SEEK_BUDGET_MS = 28;
 
+  /* El presupuesto de arriba está medido en una máquina con GPU de
+     sobra, donde un seek se resuelve en ~5 ms. En un equipo donde el
+     decodificador va justo, pedir 28 seeks por segundo solo sirve para
+     encolar trabajo: cada seek espera al anterior, los frames llegan
+     tarde y el video se ve a saltos en vez de suave.
+
+     Por eso el presupuesto se realimenta con lo que el decodificador
+     tarda de verdad en entregar cada frame, y se ensancha cuando ese
+     coste se acerca al presupuesto. Un scrub mas burdo sigue siendo
+     fluido — 30 s repartidos en 4.140 px dan un frame de video por cada
+     3 px de scroll — y en cambio llega a tiempo. Es la unica palanca
+     que sobrevive cuando el cuello no es este hilo. */
+  var DECODE_HEADROOM = 2.5;
+  var MAX_BUDGET_MS = 120;
+
   function clamp(value, min, max) {
     return value < min ? min : value > max ? max : value;
   }
@@ -105,6 +120,7 @@
     this.presented = 0;
     this.fps = parseFloat(el.getAttribute("data-scrub-fps")) || 30;
     this.budget = parseFloat(el.getAttribute("data-scrub-budget")) || SEEK_BUDGET_MS;
+    this.decodeCost = 0;
     this.mediaTimes = [];
     this.seekInFlight = false;
     this.watchdog = 0;
@@ -118,6 +134,7 @@
     this.top = 0;
     this.active = false;
     this.ready = false;
+    this.visible = true;
     this.supported = typeof this.video.requestVideoFrameCallback === "function";
 
     this.reduced = window.matchMedia(REDUCED_QUERY);
@@ -219,8 +236,19 @@
     this.range = Math.max(1, this.el.offsetHeight - this.stage.offsetHeight);
   };
 
+  /* Un scrub fuera de pantalla no se avanza. El listener de scroll es
+     global: sin este corte, cada scroll de la pagina arranco el rAF de
+     TODOS los scrub y los empujaba hasta el final del video mientras el
+     usuario ni los veia. Al volver, el hero tenia que rebobinar ~28 s
+     frame a frame, que es la direccion mas cara para el decodificador y
+     se ve como video a saltos. El IntersectionObserver ya sabe si la
+     seccion esta en pantalla; aqui solo se le hace caso. */
   Scrub.prototype.onScroll = function () {
     if (this.el.getAttribute("data-mode") === "loop") return;
+    if (!this.visible) {
+      this.stop();
+      return;
+    }
     this.targetProgress = clamp(
       (window.pageYOffset - this.top) / this.range,
       0,
@@ -280,11 +308,23 @@
     this.requestSeek();
   };
 
+  /* El presupuesto real nunca baja del declarado, pero sube si el
+     decodificador no da abasto. El tope evita que una pausa larga
+     infle el valor para siempre. */
+  Scrub.prototype.effectiveBudget = function () {
+    var needed = this.decodeCost * DECODE_HEADROOM;
+    return clamp(
+      Math.max(this.budget, needed),
+      this.budget,
+      Math.max(this.budget, MAX_BUDGET_MS)
+    );
+  };
+
   Scrub.prototype.requestSeek = function () {
     if (this.seekInFlight || !this.duration) return;
 
     var now = performance.now();
-    if (now - this.lastSeekAt < this.budget) return;
+    if (now - this.lastSeekAt < this.effectiveBudget()) return;
 
     var target = this.snap(this.targetTime());
     var frame = 1 / this.fps;
@@ -300,10 +340,14 @@
   Scrub.prototype.armWatchdog = function () {
     var self = this;
     window.clearTimeout(this.watchdog);
+    /* con un presupuesto ya ensanchado, 320 ms dejan de ser "el decoder
+       se ha colgado" y pasan a ser "el decoder va lento": el nudge
+       (play + pause) solo debe firing cuando el frame no llega de
+       ninguna manera, no cuando llega tarde */
     this.watchdog = window.setTimeout(function () {
       if (!self.seekInFlight) return;
       self.nudge();
-    }, SEEK_TIMEOUT);
+    }, Math.max(SEEK_TIMEOUT, this.effectiveBudget() * 4));
   };
 
   Scrub.prototype.nudge = function () {
@@ -332,6 +376,14 @@
     this.pendingFrame = 0;
     this.seekInFlight = false;
     window.clearTimeout(this.watchdog);
+
+    /* lo que de verdad tardo el decodificador en servir este frame */
+    var cost = now - this.lastSeekAt;
+    if (cost > 0 && cost < 2000) {
+      this.decodeCost = this.decodeCost
+        ? this.decodeCost * 0.8 + cost * 0.2
+        : cost;
+    }
 
     this.presented = meta.mediaTime;
     this.sampleFps(meta.mediaTime);
@@ -440,6 +492,7 @@
      En modo scrub el video ya esta pausado y solo se mueve por
      seek, asi que aqui solo hace falta cubrir el caso loop. */
   Scrub.prototype.setVisible = function (visible) {
+    this.visible = visible;
     if (this.el.getAttribute("data-mode") !== "loop") {
       if (visible) this.onScroll();
       else this.stop();

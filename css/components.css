@@ -25,15 +25,42 @@
   border-bottom-color: var(--rule);
 }
 
-[data-theme="dark"] .site-header {
+/* El `data-theme` lo lleva la PROPIA cabecera — es quien lo cambia
+   desde main.js —, asi que el selector tiene que ser compuesto.
+   Antes era `[data-theme="dark"] .site-header`, que exige un
+   ANCESTRO con ese atributo: la cabecera es hija directa de body
+   y no tiene ninguno. Ninguna de estas reglas llegaba a aplicarse
+   nunca, y la cabecera se quedaba con `color: var(--ink)` sobre
+   fondo transparente en toda la pagina: menu casi negro sobre el
+   hero y los scrub oscuros. */
+.site-header[data-theme="dark"] {
   color: var(--hueso);
 }
 
-[data-theme="dark"] .site-header[data-scrolled] {
+.site-header[data-theme="dark"][data-scrolled] {
   background: rgba(23, 16, 15, 0.78);
 }
 
-[data-theme="light"] .site-header[data-scrolled] {
+/* Velo de la barra cuando AÚN no hay scroll, sobre el hero.
+
+   Sobre el video, la franja de los 72px de la barra queda a
+   1,8:1 con el texto crema: el frame mas claro de ahi da 0,90 de
+   luminancia y el scrim del escenario solo pone 0,4-0,6 de negro
+   encima. Oscurecer mas el frame no arregla el menu: para llegar
+   a 4,5:1 habria que tapar el frame casi por completo, y eso ya
+   seria tapar el hero. Lo que hace falta es fondo DETRAS de la
+   barra: con 0,86 de negro por delante la misma franja queda en
+   7,7:1.
+
+   Al desplazarse el velo se retira y entra el fondo plano de
+   0,78 del bloque de arriba. Ese si cumple (6,7:1), porque en
+  scroll la franja cae sobre el scrim del escenario, que ya esta
+   oscurecido. La diferencia entre 0,86 y 0,78 no se ve. */
+.site-header[data-theme="dark"]:not([data-scrolled]) {
+  background: rgba(23, 16, 15, 0.86);
+}
+
+.site-header[data-theme="light"][data-scrolled] {
   background: rgba(247, 244, 238, 0.88);
 }
 

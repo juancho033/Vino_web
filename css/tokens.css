@@ -78,7 +78,13 @@
 
   --ink: #1a1512;
   --ink-2: #554b44;
-  --ink-3: #8c8179;
+  /* El terciario era #8c8179 y daba 3,46:1 sobre papel: por debajo
+     del 4,5:1 que exige WCAG para texto normal, y se usaba en
+     seis sitios como texto de 10 a 13px. Oscurecido hasta 5,11:1
+     sobre papel y 4,68:1 sobre el papel hundido, que es donde
+     peor se leía. Sigue siendo el tono más quieto de la rampa:
+     el salto hasta ink-2 (7,7:1) continúa siendo un escalón. */
+  --ink-3: #6f665f;
   --line: #e3dcd1;
   --line-strong: #cfc5b6;
 
@@ -180,5 +186,16 @@
     --dur-slow: 1ms;
     --dur-reveal: 1ms;
     --scrub-length: 100vh;
+  }
+}
+
+/* El stage de un scrub mide lo que el viewport, pero `--fs-wordmark`
+   se media solo contra el ancho. En un movil de lado eso mete 105px de
+   wordmark en un stage de 390px, el bloque entero se sube por encima
+   del scrim y el eyebrow queda a 1,14:1 sobre el frame mas claro.
+   En pantallas bajas el wordmark pasa a medirse contra la altura. */
+@media (max-height: 620px) {
+  :root {
+    --fs-wordmark: clamp(3.4rem, 15svh, 9.5rem);
   }
 }

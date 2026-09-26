@@ -276,11 +276,13 @@
   color: var(--hueso);
 }
 
+/* `--hueso-3` daba 4,49:1 sobre `--noche-2`, es decir, 0,01 por
+   debajo del mínimo. `--hueso-2` lo deja en 7,1:1. */
 .wine__fallback-ano {
   font-family: var(--font-text);
   font-size: var(--step--1);
   letter-spacing: var(--tracking-wide);
-  color: var(--hueso-3);
+  color: var(--hueso-2);
   font-variant-numeric: tabular-nums;
 }
 
@@ -303,8 +305,13 @@
   color: var(--vino-700);
 }
 
-.wine__tipo[data-tipo="blanco"] { color: var(--vino-500); }
-.wine__tipo[data-tipo="rosado"] { color: var(--vino-400); }
+/* Los tres tipos tienen que distinguirse por el tono Y cumplir
+   4,5:1 sobre papel. Con vino-400 el rosado se quedaba en
+   3,93:1, así que el trío baja un escalón: tinto 700, blanco
+   600, rosado 500. Sigue siendo la misma rampa y los tres siguen
+   siendo distinguibles entre sí. */
+.wine__tipo[data-tipo="blanco"] { color: var(--vino-600); }
+.wine__tipo[data-tipo="rosado"] { color: var(--vino-500); }
 
 .wine__name {
   font-family: var(--font-display);

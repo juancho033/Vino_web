@@ -12,44 +12,73 @@
     var header = document.querySelector("[data-header]");
     if (!header) return;
 
-    var scrolled = 0;
-    var onScroll = function () {
-      var next = window.pageYOffset > 24 ? 1 : 0;
-      if (next === scrolled) return;
-      scrolled = next;
-      if (next) header.setAttribute("data-scrolled", "");
-      else header.removeAttribute("data-scrolled");
-    };
-
-    window.addEventListener("scroll", onScroll, { passive: true });
-    onScroll();
-
     /* Se observan TODOS los `[data-theme]`, no solo los de `main`:
        el pie de pagina esta fuera de `main` y es oscuro. Con
        `main [data-theme]` la cabecera se quedaba en el tema
        claro de los importadores mientras la recortaba el pie
-       negro, con el texto del menu en crema sobre casi negro.
+       negro, con el menu en crema sobre casi negro.
 
        El propio header se excluye: si se observara a si mismo,
        su `data-theme` se realimentaria sin cambiar nunca. */
-    var sections = document.querySelectorAll("[data-theme]:not([data-header])");
-    if (!sections.length) return;
+    var secciones = document.querySelectorAll("[data-theme]:not([data-header])");
+    var ultima = secciones.length ? secciones[secciones.length - 1] : null;
 
-    var band = new IntersectionObserver(
-      function (entries) {
-        for (var i = 0; i < entries.length; i++) {
-          if (entries[i].isIntersecting) {
-            header.setAttribute(
-              "data-theme",
-              entries[i].target.getAttribute("data-theme")
-            );
+    /* El observer usa una banda de 2px pegada al borde superior,
+       para que el tema cambie cuando la seccion llega AL TOP y
+       no en cuanto asoma un pixel. Esa banda solo la cruzan las
+       secciones mas altas que la ventana. El pie es mas bajo que
+       la pantalla, asi que al final del documento queda SIEMPRE
+       en la parte de abajo y nunca entra en la banda: la cabecera
+       conservaba el tema claro de los importadores sobre el pie
+       negro. Al pegarse al final se aplica el tema de la ultima
+       seccion a mano, y al despegar manda de nuevo el observer. */
+    function alFinal() {
+      var doc = document.documentElement;
+      var fondo = doc.scrollHeight - window.innerHeight;
+      return fondo <= 2 || window.pageYOffset >= fondo - 2;
+    }
+
+    if (secciones.length) {
+      var band = new IntersectionObserver(
+        function (entries) {
+          /* Al final del documento manda la regla de `alFinal`:
+             si no, el observer puede reponer el tema de una
+             seccion alta en una pagina corta. */
+          if (alFinal()) return;
+          for (var e = 0; e < entries.length; e++) {
+            if (!entries[e].isIntersecting) continue;
+            var t = entries[e].target.getAttribute("data-theme");
+            if (t) header.setAttribute("data-theme", t);
           }
-        }
-      },
-      { rootMargin: "0px 0px -" + (window.innerHeight - 2) + "px 0px" }
-    );
+        },
+        { rootMargin: "0px 0px -" + (window.innerHeight - 2) + "px 0px" }
+      );
+      for (var i = 0; i < secciones.length; i++) band.observe(secciones[i]);
+    }
 
-    for (var i = 0; i < sections.length; i++) band.observe(sections[i]);
+    /* `scrolled` guarda a la vez el estado del fondo y el del
+       final, porque los dos los decide el mismo evento: si solo
+       guardara el booleano de scroll, pasar por el final sin
+       mover el scroll no reevaluaria el tema. */
+    var previo = null;
+    var onScroll = function () {
+      var final = alFinal();
+      var estado = (window.pageYOffset > 24 ? "1" : "0") + (final ? "f" : "");
+      if (estado === previo) return;
+      previo = estado;
+
+      if (window.pageYOffset > 24) header.setAttribute("data-scrolled", "");
+      else header.removeAttribute("data-scrolled");
+
+      if (final && ultima) header.setAttribute("data-theme", ultima.getAttribute("data-theme"));
+    };
+
+    window.addEventListener("scroll", onScroll, { passive: true });
+    /* El final del documento depende de la altura de la ventana:
+       al redimensionar cambia, y sin esto la cabecera se queda con
+       un tema que ya no corresponde. */
+    window.addEventListener("resize", onScroll, { passive: true });
+    onScroll();
   }
 
   function reveals() {

@@ -35,16 +35,28 @@
 
 /* --- Muro de distintivos ---------------------------------------- */
 
-/* Los filetes van en el contenedor y a la derecha y abajo de cada
-   celda, no entre celdas: con `border-inline` en la celda, el
-   borde izquierdo duplica al de la vecina y sale un filete de
-   2px en cada unión. Con este reparto, todas las líneas miden
-   exactamente 1px. */
+/* Columnas explicitas, no `auto-fit`. Con `auto-fit` +
+   `minmax(13rem, 1fr)` el navegador metía 6 columnas de 213px a
+   1440px: el muro se leía como una tira de iconos, no como seis
+   casas. Ahora 1 / 2 / 3 columnas, que además reparte las 6
+   piezas en filas completas sin huérfanas. */
 .importadores__muro {
   display: grid;
-  grid-template-columns: repeat(auto-fit, minmax(min(13rem, 100%), 1fr));
+  grid-template-columns: 1fr;
   border-top: var(--keyline) solid var(--line-strong);
   border-left: var(--keyline) solid var(--line);
+}
+
+@media (min-width: 30rem) {
+  .importadores__muro {
+    grid-template-columns: repeat(2, 1fr);
+  }
+}
+
+@media (min-width: 64rem) {
+  .importadores__muro {
+    grid-template-columns: repeat(3, 1fr);
+  }
 }
 
 .importador {
@@ -81,11 +93,14 @@
   color: var(--ink);
 }
 
+/* `--ink-2` y no `--ink-3`: a 10,24px el terciario da 3,46:1
+   sobre papel, y el mínimo para texto normal es 4,5:1. El
+   mercado y el colofón son texto, no adorno. */
 .importador__mercado {
   font-size: var(--step--2);
   letter-spacing: var(--tracking-wide);
   text-transform: uppercase;
-  color: var(--ink-3);
+  color: var(--ink-2);
 }
 
 .importadores__nota {
@@ -95,7 +110,7 @@
   border-top: var(--keyline) solid var(--line);
   font-size: var(--step--2);
   letter-spacing: 0.02em;
-  color: var(--ink-3);
+  color: var(--ink-2);
 }
 
 /* --- PIE DE PÁGINA --------------------------------------------- */
@@ -157,16 +172,24 @@
   font-variant-numeric: tabular-nums;
 }
 
-/* Los enlaces del pie son 44px de alto en vertical, no 20px. Con
-   `inline-block` y padding de bloque, el target táctil se cumple
-   sin agrandar la tipografía ni romper la lista. */
+/* Los enlaces del pie necesitan 44px de alto, no los ~37px que
+   dan 12,8px de texto con el interlineado del cuerpo. Se fija
+   `min-height` en vez de subir el `padding-block` porque el
+   interlineado puede cambiar con la fuente y `min-height` no se
+   mueve. Es el mismo objetivo táctil de 2,75rem que usan los
+   chips de la carta. */
 .site-foot__lista a,
 .site-foot__contacto a {
-  display: inline-block;
-  padding-block: var(--space-2xs);
+  display: inline-flex;
+  align-items: center;
+  min-height: 2.75rem;
   font-size: var(--step--1);
   color: var(--hueso-2);
   transition: color var(--dur-fast) var(--ease);
+}
+
+.site-foot__lista a {
+  padding-inline-end: var(--space-2xs);
 }
 
 .site-foot__contacto a {

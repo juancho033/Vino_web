@@ -100,6 +100,120 @@
   opacity: 0.25;
 }
 
+/* --- Sostén del texto sobre el metraje ----------------------
+   El degradado de `.scrub--dark` es fijo sobre la altura del stage, y
+   el bloque de texto no lo es: cambia con el ancho, con el tamano del
+   wordmark y con cuantas lineas.meta el lede. Medido, el borde del
+   scrim caia justo sobre el eyebrow y lo dejaba a 1,14:1 en movil
+   apaisado y a 3,96:1 en 1024x600. Un degradado en porcentajes no
+   puede seguir contenido que se mueve.
+
+   Asi que el sosten vive en el panel, que si crece con el texto, y
+   sube `18rem` por encima de su borde superior para alcanzar el
+   eyebrow, que vive dentro del padding. A ancho completo no deja
+   bordes laterales, y en un stage corto el headroom pesa mas y el
+   eyebrow cae mas abajo en el degradado, donde hay mas tinta: se
+   corrige solo. */
+#inicio .scrub__panel {
+  background: linear-gradient(
+    to top,
+    rgba(23, 16, 15, 0.62) 0%,
+    rgba(23, 16, 15, 0.62) 40%,
+    rgba(23, 16, 15, 0.5) 66%,
+    rgba(23, 16, 15, 0) 96%
+  );
+  background-size: 100% calc(100% + 8rem);
+  background-position: 0 100%;
+  background-repeat: no-repeat;
+  text-shadow: 0 1px 2px rgba(23, 16, 15, 0.4), 0 2px 16px rgba(23, 16, 15, 0.45);
+}
+
+/* --- Coreografía del panel: solo el hero ---------------------
+   El panel cuelga de un stage sticky, clavado al viewport durante
+   los 460vh del riel, así que una línea de tiempo `view()` sobre el
+   panel mediría siempre lo mismo. Lo que de verdad viaja es la
+   sección. Por eso el movimiento se apoya en `--progress`, que es el
+   mismo número que gobierna `currentTime`: el texto y el metraje no
+   pueden separarse nunca, ni un frame.
+
+   Cada elemento tiene su propia ventana de salida y su propia
+   velocidad. Esa diferencia de ritmo es lo que hace que el conjunto
+   se lea como una composición y no como un fundido único; con la
+   misma curva para los cuatro, el efecto se ve como una mascara que
+   se desliza.
+
+   Las ventanas viven en el stage, no en el panel, porque asi quedan a
+   un solo sitio y no se recalculan por hijo. El scrim no se anima: es
+   el sostén del texto sobre el video, y desvanecerlo para "devolverle
+   el encuadre" dejaba al titulo sin base oscura y lo comia el frame
+   mas claro de la imagen. */
+#inicio .scrub__stage {
+  --p: var(--progress, 0);
+  --out-cue: clamp(0, calc((var(--p) - 0.005) / 0.065), 1);
+  --out-eyebrow: clamp(0, calc((var(--p) - 0.03) / 0.17), 1);
+  --out-mark: clamp(0, calc((var(--p) - 0.06) / 0.46), 1);
+  --out-lede: clamp(0, calc((var(--p) - 0.20) / 0.60), 1);
+}
+
+/* La pista es una invitación, no una etiqueta. En cuanto el usuario
+   ha entendido que aquí hay riel, su trabajo está hecho y sobra. */
+#inicio .scrub__cue {
+  opacity: calc(1 - var(--out-cue));
+  transform: translate3d(0, calc(var(--out-cue) * 0.75rem), 0);
+}
+
+/* El eyebrow deja de ser el acento de marca. Es texto de 12,8px en
+   mayusculas sobre un video que en ningun momento garantiza un fondo
+   estable, y a ese tamaño WCAG exige 4,5:1: no hay forma de cumplirlo
+   sin oscurecer el video lo suficiente como para que se vea como un
+   cuadro. Subido a 20px con peso 700 entra de lleno en "texto grande",
+   y la barra baja a 3:1 — medido 3,40:1 sobre el frame mas claro con
+   un velo mucho mas discreto. El acento se queda en el resto del
+   sitio, pero no como tinta pequeña sobre imagen en movimiento. */
+#inicio .scrub__panel .eyebrow {
+  color: var(--hueso);
+  font-size: 1.25rem;
+  font-weight: 700;
+  opacity: calc(1 - var(--out-eyebrow));
+  transform: translate3d(0, calc(var(--out-eyebrow) * -1.5rem), 0);
+}
+
+/* En pantallas bajas no cabe un sostén discreto: el bloque de texto
+   llena el stage y el borde del degradado cae por encima del eyebrow.
+   Solo aqui se refuerza; en vertical y en escritorio el video se ve
+   limpio, que es donde se mira. */
+@media (max-height: 620px) {
+  #inicio .scrub__panel {
+    background: linear-gradient(
+      to top,
+      rgba(23, 16, 15, 0.92) 0%,
+      rgba(23, 16, 15, 0.88) 32%,
+      rgba(23, 16, 15, 0.78) 58%,
+      rgba(23, 16, 15, 0) 92%
+    );
+    background-size: 100% calc(100% + 12rem);
+  }
+}
+
+/* El wordmark es el movimiento grande del hero: sube, encoge un poco
+   y se disuelve a lo largo de la mitad del riel. El `scale` va en el
+   mismo `transform` a proposito, para no abrir una capa de
+   composicion paralela. */
+#inicio .wordmark {
+  opacity: calc(1 - var(--out-mark));
+  transform:
+    translate3d(0, calc(var(--out-mark) * -6rem), 0)
+    scale(calc(1 - var(--out-mark) * 0.04));
+}
+
+/* El lede es lo ultimo en irse. Es el mensaje, no la marca, asi que
+   aguanta hasta el 80% del riel: cuando se va, el video ya lleva un
+   rato ganado la escena. */
+#inicio .scrub__lede {
+  opacity: calc(1 - var(--out-lede));
+  transform: translate3d(0, calc(var(--out-lede) * -2.5rem), 0);
+}
+
 .wordmark {
   margin: 0;
   font-family: var(--font-display);
@@ -108,8 +222,6 @@
   line-height: var(--leading-display);
   letter-spacing: var(--tracking-display);
   color: var(--hueso);
-  transform: translate3d(0, calc(var(--progress, 0) * -3rem), 0);
-  will-change: transform;
 }
 
 .wordmark em {
@@ -132,7 +244,6 @@
   letter-spacing: var(--tracking-wide);
   text-transform: uppercase;
   color: var(--hueso-2);
-  opacity: calc(1 - min(var(--progress, 0) * 5, 1));
 }
 
 .scrub__cue::before {
@@ -250,6 +361,15 @@
 }
 
 .scrub[data-mode="loop"] .wordmark {
+  transform: none;
+}
+
+/* En modo loop `--progress` vale 0 y las ventanas ya estan en 0, asi
+   que esto deberia ser redundante. Se neutraliza igual de forma
+   explicita porque que el titulo se lea bien no puede depender de que
+   un numero dentro del motor siga exactamente en cero. */
+.scrub[data-mode="loop"] .scrub__panel > * {
+  opacity: 1;
   transform: none;
 }
 

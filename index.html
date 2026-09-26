@@ -3,7 +3,7 @@
 <head>
   <meta charset="utf-8">
   <meta name="viewport" content="width=device-width, initial-scale=1">
-  <title>Vignoble Noir — Cava privada, Pessac-Lestonac</title>
+  <title>Vignoble Noir</title>
   <meta name="description" content="Vignoble Noir: seis viñedos, una sola mesa. Catálogo de la cava privada fundada en 1894 al otro lado de la Gironde.">
   <meta name="color-scheme" content="light">
   <meta name="theme-color" content="#17100f">
@@ -26,6 +26,10 @@
       .scrub__video { position: relative; height: auto; aspect-ratio: 16 / 9; }
       .scrub__hud, .scrub__loader, .scrub__toggle { display: none; }
       .scrub__panel { position: relative; }
+      /* Sin JS nunca se escribe --progress, asi que las ventanas de la
+         coreografia se quedarian en su valor por defecto (0 = texto
+         intacto). Se anula igual, por no depender de ese defecto. */
+      .scrub__panel > * { opacity: 1; transform: none; }
       .carta__filtros { display: none; }
       .reveal { opacity: 1; transform: none; }
       /* Sin JS el ambiente no arranca nunca, asi que se queda en
